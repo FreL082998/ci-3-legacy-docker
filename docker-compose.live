@@ -1,0 +1,111 @@
+version: "3.8"
+
+services:
+  development:
+    build:
+      args:
+        APP_PATH: ${DEVELOPMENT_PATH}
+        APP_PORT: ${DEVELOPMENT_PORT}
+      context: .
+      dockerfile: ./docker/php/ci3/Dockerfile
+    image: ${APP_NAME}-development
+    container_name: ${APP_NAME}-development
+    restart: unless-stopped
+    volumes:
+      - ./${DEVELOPMENT_PATH}:/var/www/${DEVELOPMENT_PATH}
+    networks:
+      - system
+
+  staging:
+    build:
+      args:
+        APP_PATH: ${STAGING_PATH}
+        APP_PORT: ${STAGING_PORT}
+      context: .
+      dockerfile: ./docker/php/ci3/Dockerfile
+    image: ${APP_NAME}-staging
+    container_name: ${APP_NAME}-staging
+    restart: unless-stopped
+    volumes:
+      - ./${STAGING_PATH}:/var/www/${STAGING_PATH}
+    networks:
+      - system
+
+  production:
+    build:
+      args:
+        APP_PATH: ${PRODUCTION_PATH}
+        APP_PORT: ${PRODUCTION_PORT}
+      context: .
+      dockerfile: ./docker/php/ci3/Dockerfile
+    image: ${APP_NAME}-production
+    # container_name: ${APP_NAME}-production
+    restart: unless-stopped
+    volumes:
+      - ./${PRODUCTION_PATH}:/var/www/${PRODUCTION_PATH}
+    environment:
+      - PORT=${PRODUCTION_PORT}
+    deploy:
+      replicas: 3
+    networks:
+      - system
+
+  db:
+    image: ${DB_CONNECTION}:${DB_VERSION}
+    container_name: ${APP_NAME}-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: ${DB_CONNECTION}
+    volumes:
+      - ./docker/mysql/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    networks:
+      - system
+
+  nginx:
+    image: nginx:latest
+    container_name: ${APP_NAME}-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template
+      - ./html:/var/www/html
+      - ./${DEVELOPMENT_PATH}:/var/www/${DEVELOPMENT_PATH}
+      - ./${STAGING_PATH}:/var/www/${STAGING_PATH}
+      - ./${PRODUCTION_PATH}:/var/www/${PRODUCTION_PATH}
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    environment:
+      - SERVER_NAME=${SERVER_NAME}
+      - DEVELOPMENT_PATH=${DEVELOPMENT_PATH}
+      - DEVELOPMENT_PORT=${DEVELOPMENT_PORT}
+      - STAGING_PATH=${STAGING_PATH}
+      - STAGING_PORT=${STAGING_PORT}
+      - PRODUCTION_PATH=${PRODUCTION_PATH}
+      - PRODUCTION_PORT=${PRODUCTION_PORT}
+    command: [ "/bin/sh", "-c", "envsubst '$$SERVER_NAME $$DEVELOPMENT_PATH $$DEVELOPMENT_PORT $$STAGING_PATH $$STAGING_PORT $$PRODUCTION_PATH $$PRODUCTION_PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'" ]
+    networks:
+      - system
+
+  certbot:
+    image: certbot/certbot
+    container_name: ${APP_NAME}-certbot
+    command: "/bin/sh -c 'trap exit TERM; certbot renew; tail -f /dev/null'"
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    networks:
+      - system
+    restart: unless-stopped
+
+networks:
+  system:
+    driver: bridge

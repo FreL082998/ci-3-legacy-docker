@@ -1,0 +1,9 @@
+# Docker
+.env
+.docker-compose.yml
+
+# Project Directory Paths
+html
+development
+staging
+production
