@@ -1,6 +1,6 @@
 # Docker
 .env
-.docker-compose.yml
+docker-compose.yml
 
 # Project Directory Paths
 html
