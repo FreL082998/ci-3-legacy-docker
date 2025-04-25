@@ -81,8 +81,8 @@ services:
       - ./${DEVELOPMENT_PATH}:/var/www/${DEVELOPMENT_PATH}
       - ./${STAGING_PATH}:/var/www/${STAGING_PATH}
       - ./${PRODUCTION_PATH}:/var/www/${PRODUCTION_PATH}
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
+      - ./docker/certbot/conf:/etc/letsencrypt
+      - ./docker/certbot/www:/var/www/certbot
     environment:
       - SERVER_NAME=${SERVER_NAME}
       - DEVELOPMENT_PATH=${DEVELOPMENT_PATH}
@@ -100,8 +100,8 @@ services:
     container_name: ${APP_NAME}-certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; certbot renew; tail -f /dev/null'"
     volumes:
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
+      - ./docker/certbot/conf:/etc/letsencrypt
+      - ./docker/certbot/www:/var/www/certbot
     restart: unless-stopped
     networks:
       - system
