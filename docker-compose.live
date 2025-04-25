@@ -82,7 +82,6 @@ services:
       - ./${STAGING_PATH}:/var/www/${STAGING_PATH}
       - ./${PRODUCTION_PATH}:/var/www/${PRODUCTION_PATH}
       - ./docker/certbot/conf:/etc/letsencrypt
-      - ./docker/certbot/www:/var/www/certbot
     environment:
       - SERVER_NAME=${SERVER_NAME}
       - DEVELOPMENT_PATH=${DEVELOPMENT_PATH}
@@ -98,10 +97,8 @@ services:
   certbot:
     image: certbot/certbot
     container_name: ${APP_NAME}-certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; certbot renew; tail -f /dev/null'"
     volumes:
       - ./docker/certbot/conf:/etc/letsencrypt
-      - ./docker/certbot/www:/var/www/certbot
     restart: unless-stopped
     networks:
       - system
