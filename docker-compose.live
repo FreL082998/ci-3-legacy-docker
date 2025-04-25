@@ -98,13 +98,13 @@ services:
   certbot:
     image: certbot/certbot
     container_name: ${APP_NAME}-certbot
-    command: "/bin/sh -c 'trap exit TERM; certbot renew; tail -f /dev/null'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; certbot renew; tail -f /dev/null'"
     volumes:
       - ./nginx/certbot/conf:/etc/letsencrypt
       - ./nginx/certbot/www:/var/www/certbot
+    restart: unless-stopped
     networks:
       - system
-    restart: unless-stopped
 
 networks:
   system:
