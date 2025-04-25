@@ -82,7 +82,6 @@ services:
       - ./${STAGING_PATH}:/var/www/${STAGING_PATH}
       - ./${PRODUCTION_PATH}:/var/www/${PRODUCTION_PATH}
       - ./docker/certbot/conf:/etc/letsencrypt
-      - ./docker/certbot/www:/var/www/certbot
     environment:
       - SERVER_NAME=${SERVER_NAME}
       - DEVELOPMENT_PATH=${DEVELOPMENT_PATH}
